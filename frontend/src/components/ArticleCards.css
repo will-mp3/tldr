@@ -1,0 +1,159 @@
+.article-cards {
+  padding: 0;
+}
+
+.articles-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.articles-header h2 {
+  margin: 0 0 8px 0;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.articles-header p {
+  margin: 0;
+  color: #b0b0b0;
+  font-size: 0.9rem;
+}
+
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.article-card {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.article-card:hover {
+  transform: translateY(-2px);
+  border-color: #007acc;
+}
+
+.article-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.source-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.source-badge.base {
+  background-color: #404040;
+  color: #ffffff;
+}
+
+.source-badge.ai {
+  background-color: #7c3aed;
+  color: #ffffff;
+}
+
+.source-badge.crypto {
+  background-color: #f59e0b;
+  color: #000000;
+}
+
+.source-badge.security {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+.article-date {
+  font-size: 0.8rem;
+  color: #888888;
+}
+
+.article-title {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.article-link {
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.article-link:hover {
+  color: #007acc;
+  text-decoration: underline;
+}
+
+.article-summary {
+  margin: 0;
+  color: #b0b0b0;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.placeholder-notice {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.placeholder-notice p {
+  margin: 0;
+  color: #888888;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .articles-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .article-card {
+    padding: 16px;
+  }
+  
+  .article-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .article-title {
+    font-size: 1rem;
+  }
+  
+  .article-summary {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .articles-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .source-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+}
