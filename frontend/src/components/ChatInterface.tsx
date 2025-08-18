@@ -50,7 +50,7 @@ const ChatInterface: React.FC = () => {
   return (
     <div className="chat-interface">
       <div className="chat-header">
-        <h2>Tech News Assistant</h2>
+        <h2>Dont Get Left Behind</h2>
         <p>Ask me about recent tech news and developments</p>
       </div>
       
