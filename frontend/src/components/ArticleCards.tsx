@@ -87,7 +87,7 @@ const ArticleCards: React.FC = () => {
       </div>
 
       <div className="placeholder-notice">
-        <p>📝 Showing placeholder articles. Real articles will appear here once newsletter processing is implemented.</p>
+        <p>Showing placeholder articles. Real articles will appear here once newsletter processing is implemented.</p>
       </div>
     </div>
   );
