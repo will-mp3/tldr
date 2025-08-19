@@ -53,7 +53,7 @@ const ArticleCards: React.FC = () => {
     <div className="article-cards">
       <div className="articles-header">
         <h2>Recent Articles</h2>
-        <p>Latest tech news from our news sources</p>
+        <p>Latest tech news from around the globe</p>
       </div>
 
       <div className="articles-grid">
@@ -87,7 +87,7 @@ const ArticleCards: React.FC = () => {
       </div>
 
       <div className="placeholder-notice">
-        <p>Showing placeholder articles. Real articles will appear here once newsletter processing is implemented.</p>
+        <p>Showing placeholder articles. Real articles will appear here once newsletter processing is implemented. Daily updates at 7:00AM EST</p>
       </div>
     </div>
   );
