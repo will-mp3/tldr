@@ -56,7 +56,7 @@ const ArticleCards: React.FC = () => {
       <div className="article-cards">
         <div className="articles-header">
           <h2>Recent Articles</h2>
-          <p>Loading latest tech news from TLDR newsletters...</p>
+          <p>Loading latest tech news...</p>
         </div>
         <div className="loading-spinner">Loading...</div>
       </div>
@@ -81,7 +81,7 @@ const ArticleCards: React.FC = () => {
     <div className="article-cards">
       <div className="articles-header">
         <h2>Recent Articles</h2>
-        <p>Latest tech news from TLDR newsletters</p>
+        <p>The latest tech news all in one place.</p>
       </div>
 
       <div className="articles-grid">
@@ -116,7 +116,7 @@ const ArticleCards: React.FC = () => {
 
       {articles.length === 0 && (
         <div className="placeholder-notice">
-          <p>📝 No articles found. Make sure the backend is running and the database is populated.</p>
+          <p>📝 No articles found.</p>
         </div>
       )}
     </div>
