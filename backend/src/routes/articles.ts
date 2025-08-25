@@ -2,6 +2,7 @@ import express from 'express';
 import { db } from '../services/database';
 import { openSearchService } from '../services/opensearch';
 import { emailProcessor } from '../services/emailProcessor';
+import { schedulerService } from '../services/scheduler';
 
 const router = express.Router();
 
@@ -155,6 +156,26 @@ router.post('/sync-opensearch', async (req, res) => {
   }
 });
 
+// POST /api/articles/cleanup - Clean up expired articles
+router.post('/cleanup', async (req, res) => {
+  try {
+    console.log('🗑️ Starting manual cleanup...');
+    const deletedCount = await schedulerService.runCleanup();
+    
+    res.json({
+      message: 'Cleanup completed successfully',
+      deleted_articles: deletedCount,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Cleanup error:', error);
+    res.status(500).json({
+      error: 'Failed to cleanup articles',
+      message: error.message || 'Cleanup failed'
+    });
+  }
+});
+
 // GET /api/articles/status - Get system status
 router.get('/status/system', async (req, res) => {
   try {
@@ -167,6 +188,7 @@ router.get('/status/system', async (req, res) => {
       },
       opensearch: openSearchService.getStatus(),
       email_processor: emailProcessor.getStatus(),
+      scheduler: schedulerService.getStatus(),
       last_check: new Date().toISOString()
     });
   } catch (error) {

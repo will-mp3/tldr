@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 
 import chatRoutes from './routes/chat';
 import articlesRoutes from './routes/articles';
+import { schedulerService } from './services/scheduler';
 
 // Load environment variables
 dotenv.config();
@@ -59,6 +60,22 @@ app.listen(PORT, () => {
   console.log(`🚀 TLDR Backend server running on port ${PORT}`);
   console.log(`📱 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Start scheduled jobs
+  schedulerService.start();
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  schedulerService.stop();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  schedulerService.stop();
+  process.exit(0);
 });
 
 export default app;
