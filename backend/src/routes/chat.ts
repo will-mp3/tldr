@@ -1,4 +1,8 @@
 import express from 'express';
+import { db } from '../services/database';
+import { embeddingsService } from '../services/embeddings';
+import { claudeService } from '../services/claude';
+import { openSearchService } from '../services/opensearch';
 
 const router = express.Router();
 
@@ -6,13 +10,7 @@ interface ChatRequest {
   message: string;
 }
 
-interface ChatResponse {
-  response: string;
-  sources?: any[];
-  timestamp: string;
-}
-
-// POST /api/chat - Send chat message
+// POST /api/chat - Send chat message with RAG
 router.post('/', async (req, res) => {
   try {
     const { message }: ChatRequest = req.body;
@@ -24,20 +22,60 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // TODO: Replace with actual RAG implementation in Phase 5
-    // For now, return a placeholder response
-    const response: ChatResponse = {
-      response: `Thanks for asking about "${message}". This is a placeholder response from the backend. In Phase 5, this will be connected to OpenAI with RAG functionality using our article database.`,
-      sources: [],
+    console.log(`💬 Processing chat query: "${message}"`);
+
+    // Step 1: Generate embedding for the user query
+    let queryEmbedding: number[] = [];
+    let relevantArticles: any[] = [];
+
+    try {
+      const embeddingResult = await embeddingsService.generateEmbedding(message);
+      queryEmbedding = embeddingResult.embedding;
+    } catch (error) {
+      console.log('⚠️  Embedding generation failed, using text search');
+    }
+
+    // Step 2: Search for relevant articles using OpenSearch (with PostgreSQL fallback)
+    try {
+      // Try OpenSearch first
+      relevantArticles = await openSearchService.searchArticles(message, 5);
+      
+      // Fallback to PostgreSQL if OpenSearch returns no results
+      if (relevantArticles.length === 0) {
+        console.log('🔄 OpenSearch returned no results, falling back to PostgreSQL');
+        relevantArticles = await db.searchArticles(message);
+      }
+      
+      console.log(`📄 Found ${relevantArticles.length} relevant articles`);
+    } catch (error) {
+      console.error('Search error:', error);
+      // Final fallback to PostgreSQL
+      try {
+        relevantArticles = await db.searchArticles(message);
+      } catch (dbError) {
+        console.error('PostgreSQL search also failed:', dbError);
+        relevantArticles = [];
+      }
+    }
+
+    // Step 3: Generate response using Claude with context
+    const chatResponse = await claudeService.generateChatResponse(message, relevantArticles);
+
+    // Step 4: Return response
+    res.json({
+      response: chatResponse.response,
+      sources: chatResponse.sources,
+      metadata: {
+        articles_found: relevantArticles.length,
+        tokens_used: chatResponse.tokens_used,
+        processing_time: chatResponse.processing_time,
+        claude_enabled: claudeService.getStatus().enabled
+      },
       timestamp: new Date().toISOString()
-    };
+    });
 
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    res.json(response);
   } catch (error) {
-    console.error('Chat error:', error);
+    console.error('❌ Chat processing error:', error);
     res.status(500).json({
       error: 'Chat processing failed',
       message: 'Unable to process your message at this time'
@@ -47,13 +85,21 @@ router.post('/', async (req, res) => {
 
 // GET /api/chat/status - Chat service status
 router.get('/status', (req, res) => {
+  const embeddingStatus = embeddingsService.getModelInfo();
+  const claudeStatus = claudeService.getStatus();
+
   res.json({
     status: 'online',
     message: 'Chat service is ready',
+    services: {
+      embeddings: embeddingStatus,
+      claude: claudeStatus,
+      database: true // db connection tested on startup
+    },
     features: {
-      rag_enabled: false, // Will be true in Phase 5
-      vector_search: false, // Will be true in Phase 3
-      openai_connected: false // Will be true in Phase 5
+      rag_enabled: true,
+      vector_search: embeddingStatus.status === 'loaded',
+      claude_connected: claudeStatus.enabled
     }
   });
 });

@@ -24,20 +24,45 @@ const ChatInterface: React.FC = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageText = inputText;
     setInputText('');
     setIsLoading(true);
 
-    // TODO: Replace with actual API call in Phase 5
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: messageText }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'This is a placeholder response. Chat functionality will be connected in Phase 5.',
+        text: data.response || 'No response received',
         isUser: false,
         timestamp: new Date()
       };
+
       setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Sorry, I encountered an error. Please try again.',
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -50,7 +75,7 @@ const ChatInterface: React.FC = () => {
   return (
     <div className="chat-interface">
       <div className="chat-header">
-        <h2>Too Long? Didn't Read? We Got You.</h2>
+        <h2>Tech News Assistant</h2>
         <p>Ask me about recent tech news and developments</p>
       </div>
       

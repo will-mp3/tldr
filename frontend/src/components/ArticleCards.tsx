@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../services/api';
 import './ArticleCards.css';
 
 interface Article {
@@ -11,25 +12,26 @@ interface Article {
 }
 
 const ArticleCards: React.FC = () => {
-  // TODO: Replace with actual API call in Phase 6
-  const placeholderArticles: Article[] = [
-    {
-      id: '1',
-      title: 'Sample Tech Article Title',
-      summary: 'This is a placeholder summary for a tech article. In the real app, this will be populated from TLDR newsletters.',
-      source_url: 'https://example.com',
-      newsletter_source: 'tldr_base',
-      published_date: new Date().toISOString()
-    },
-    {
-      id: '2',
-      title: 'Another AI Development',
-      summary: 'Another placeholder summary about AI developments. These will be real articles once we implement the newsletter processing.',
-      source_url: 'https://example.com',
-      newsletter_source: 'tldr_ai',
-      published_date: new Date().toISOString()
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.getArticles(20, 0);
+      setArticles(response.data.articles);
+    } catch (err) {
+      console.error('Error fetching articles:', err);
+      setError('Failed to load articles');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -49,15 +51,41 @@ const ArticleCards: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="article-cards">
+        <div className="articles-header">
+          <h2>Recent Articles</h2>
+          <p>Loading latest tech news from TLDR newsletters...</p>
+        </div>
+        <div className="loading-spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="article-cards">
+        <div className="articles-header">
+          <h2>Recent Articles</h2>
+          <p style={{ color: '#ff6b6b' }}>{error}</p>
+        </div>
+        <button onClick={fetchArticles} className="retry-button">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="article-cards">
       <div className="articles-header">
         <h2>Recent Articles</h2>
-        <p>Latest tech news from around the globe</p>
+        <p>Latest tech news from TLDR newsletters</p>
       </div>
 
       <div className="articles-grid">
-        {placeholderArticles.map(article => (
+        {articles.map(article => (
           <article key={article.id} className="article-card">
             <div className="article-header">
               <span className={`source-badge ${getSourceBadgeColor(article.newsletter_source)}`}>
@@ -86,9 +114,11 @@ const ArticleCards: React.FC = () => {
         ))}
       </div>
 
-      <div className="placeholder-notice">
-        <p>Showing placeholder articles. Real articles will appear here once newsletter processing is implemented. Daily updates at 7:00AM EST</p>
-      </div>
+      {articles.length === 0 && (
+        <div className="placeholder-notice">
+          <p>📝 No articles found. Make sure the backend is running and the database is populated.</p>
+        </div>
+      )}
     </div>
   );
 };

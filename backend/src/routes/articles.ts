@@ -1,5 +1,6 @@
 import express from 'express';
 import { db, Article } from '../services/database';
+import { openSearchService } from '../services/opensearch';
 
 const router = express.Router();
 
@@ -100,6 +101,23 @@ router.get('/source/:source', async (req, res) => {
     res.status(500).json({
       error: 'Failed to fetch articles by source',
       message: 'Unable to retrieve articles from specified source'
+    });
+  }
+});
+
+// POST /api/articles/sync - Sync articles to OpenSearch
+router.post('/sync', async (req, res) => {
+  try {
+    await openSearchService.syncFromDatabase();
+    res.json({
+      message: 'Articles synced to OpenSearch successfully',
+      status: openSearchService.getStatus()
+    });
+  } catch (error) {
+    console.error('Sync error:', error);
+    res.status(500).json({
+      error: 'Failed to sync articles',
+      message: error.message
     });
   }
 });
