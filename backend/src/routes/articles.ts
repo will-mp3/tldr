@@ -1,13 +1,14 @@
 import express from 'express';
-import { db, Article } from '../services/database';
+import { db } from '../services/database';
 import { openSearchService } from '../services/opensearch';
+import { emailProcessor } from '../services/emailProcessor';
 
 const router = express.Router();
 
-// GET /api/articles - Get all articles
+// GET /api/articles - Get all articles with pagination
 router.get('/', async (req, res) => {
   try {
-    const { limit = 10, offset = 0 } = req.query;
+    const { limit = 20, offset = 0 } = req.query;
     
     const limitNum = parseInt(limit as string);
     const offsetNum = parseInt(offset as string);
@@ -18,8 +19,7 @@ router.get('/', async (req, res) => {
       articles: result.articles,
       total: result.total,
       limit: limitNum,
-      offset: offsetNum,
-      message: result.articles.length > 0 ? 'Articles loaded from database' : 'No articles found'
+      offset: offsetNum
     });
   } catch (error) {
     console.error('Articles fetch error:', error);
@@ -42,19 +42,30 @@ router.get('/search', async (req, res) => {
       });
     }
     
-    const searchResults = await db.searchArticles(query);
+    // Try OpenSearch first, fallback to database search
+    let searchResults: any[] = [];
+    
+    try {
+      searchResults = await openSearchService.searchArticles(query, 10);
+      if (searchResults.length === 0) {
+        searchResults = await db.searchArticles(query);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      searchResults = await db.searchArticles(query);
+    }
     
     res.json({
       articles: searchResults,
       query,
       total: searchResults.length,
-      message: `Found ${searchResults.length} articles matching "${query}"`
+      source: searchResults.length > 0 ? 'search' : 'none'
     });
   } catch (error) {
     console.error('Article search error:', error);
     res.status(500).json({
       error: 'Search failed',
-      message: 'Unable to search articles in database'
+      message: 'Unable to search articles'
     });
   }
 });
@@ -86,15 +97,14 @@ router.get('/:id', async (req, res) => {
 router.get('/source/:source', async (req, res) => {
   try {
     const { source } = req.params;
-    const { limit = 10 } = req.query;
+    const { limit = 20 } = req.query;
     
     const articles = await db.getArticlesBySource(source, parseInt(limit as string));
     
     res.json({
       articles,
       source,
-      total: articles.length,
-      message: `Articles from ${source}`
+      total: articles.length
     });
   } catch (error) {
     console.error('Articles by source error:', error);
@@ -105,19 +115,65 @@ router.get('/source/:source', async (req, res) => {
   }
 });
 
-// POST /api/articles/sync - Sync articles to OpenSearch
-router.post('/sync', async (req, res) => {
+// POST /api/articles/process-emails - Process recent newsletter emails
+router.post('/process-emails', async (req, res) => {
   try {
-    await openSearchService.syncFromDatabase();
+    console.log('🔄 Starting email processing...');
+    await emailProcessor.processRecentEmails();
+    
     res.json({
-      message: 'Articles synced to OpenSearch successfully',
-      status: openSearchService.getStatus()
+      message: 'Email processing completed',
+      status: emailProcessor.getStatus(),
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error('Email processing error:', error);
     res.status(500).json({
-      error: 'Failed to sync articles',
-      message: error.message
+      error: 'Failed to process emails',
+      message: error.message || 'Email processing failed'
+    });
+  }
+});
+
+// POST /api/articles/sync-opensearch - Sync existing articles to OpenSearch
+router.post('/sync-opensearch', async (req, res) => {
+  try {
+    console.log('🔄 Syncing articles to OpenSearch...');
+    await openSearchService.syncFromDatabase();
+    
+    res.json({
+      message: 'Articles synced to OpenSearch successfully',
+      status: openSearchService.getStatus(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('OpenSearch sync error:', error);
+    res.status(500).json({
+      error: 'Failed to sync to OpenSearch',
+      message: error.message || 'Sync failed'
+    });
+  }
+});
+
+// GET /api/articles/status - Get system status
+router.get('/status/system', async (req, res) => {
+  try {
+    const dbResult = await db.getArticles(1, 0);
+    
+    res.json({
+      database: {
+        connected: true,
+        total_articles: dbResult.total
+      },
+      opensearch: openSearchService.getStatus(),
+      email_processor: emailProcessor.getStatus(),
+      last_check: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Status check error:', error);
+    res.status(500).json({
+      error: 'Failed to get system status',
+      message: error.message || 'Status check failed'
     });
   }
 });
