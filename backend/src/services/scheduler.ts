@@ -13,9 +13,9 @@ class SchedulerService {
   private setupJobs(): void {
     console.log('⏰ Setting up scheduled jobs...');
 
-    // Daily newsletter processing at 10:00 AM EST (15:00 UTC)
+    // Daily newsletter processing at 10:00 AM EST (14:00 UTC)
     // Using UTC time since servers typically run in UTC
-    this.dailyProcessingJob = cron.schedule('0 15 * * *', async () => {
+    this.dailyProcessingJob = cron.schedule('0 14 * * *', async () => {
       console.log('🕙 10:00 AM EST - Starting daily newsletter processing...');
       try {
         await emailProcessor.processRecentEmails();
@@ -28,8 +28,8 @@ class SchedulerService {
       timezone: 'UTC'
     });
 
-    // Daily cleanup at 2:00 AM EST (07:00 UTC) to remove expired articles
-    this.cleanupJob = cron.schedule('0 7 * * *', async () => {
+    // Daily cleanup at 2:00 AM EST (06:00 UTC) to remove expired articles
+    this.cleanupJob = cron.schedule('0 6 * * *', async () => {
       console.log('🗑️ 2:00 AM EST - Starting daily cleanup...');
       try {
         const deletedCount = await db.cleanupExpiredArticles();
