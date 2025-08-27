@@ -1,14 +1,14 @@
-# TLDR Newsletter Aggregation System
+#TLDR
 
-A comprehensive newsletter aggregation and analysis platform that processes TLDR newsletters, generates embeddings for semantic search, and provides an AI-powered chat interface for querying tech news content.
+A comprehensive newsletter aggregation and analysis platform that processes tech newsletters, generates embeddings for semantic search, and provides an AI-powered chat interface for querying tech news content.
 
 ## Project Overview
 
-TLDR is a full-stack application designed for software engineers and tech professionals who want to efficiently consume and interact with technology news from TLDR newsletters. The system automatically processes incoming newsletters, extracts articles, generates embeddings for semantic search, and provides both conversational AI interaction and manual browsing interfaces.
+TLDR is a full-stack application designed for software engineers and tech professionals who want to efficiently consume and interact with news from tech newsletters. The system automatically processes incoming newsletters, extracts articles, generates embeddings for semantic search, and provides both conversational AI interaction and manual browsing interfaces.
 
 ### Core Features
 
-- **Automated Newsletter Processing**: Daily email processing of TLDR newsletter family (Base, AI, Crypto, DevOps, WebDev, Data)
+- **Automated Newsletter Processing**: Daily email processing of TLDR newsletter 
 - **Intelligent Content Extraction**: HTML and text parsing to extract article titles, summaries, and source URLs
 - **Semantic Search**: Vector embeddings using Xenova Transformers for enhanced content discovery
 - **AI Chat Interface**: Claude Haiku-powered conversational interface for querying newsletter content
@@ -37,7 +37,7 @@ TLDR is a full-stack application designed for software engineers and tech profes
 ### Email Processing
 - **node-imap** for IMAP email server connectivity
 - **mailparser** for parsing email content and attachments
-- **Custom HTML/text parsers** for TLDR newsletter structure extraction
+- **Custom HTML/text parsers** for newsletter structure extraction
 
 ### Infrastructure and DevOps
 - **Docker Compose** for local development environment
@@ -55,7 +55,7 @@ TLDR is a full-stack application designed for software engineers and tech profes
 
 ### Data Flow Pipeline
 
-1. **Email Ingestion**: Scheduled IMAP connections retrieve TLDR newsletters
+1. **Email Ingestion**: Scheduled IMAP connections retrieve newsletters
 2. **Content Parsing**: Custom parsers extract articles from newsletter HTML/text
 3. **Embedding Generation**: Xenova Transformers create vector embeddings for titles and summaries
 4. **Database Storage**: Articles stored in PostgreSQL with vector data
@@ -97,7 +97,7 @@ The system implements a hybrid search approach:
 
 **Key Components**:
 - IMAP client configuration for Gmail integration
-- Custom HTML parsers for TLDR newsletter structure
+- Custom HTML parsers for newsletter structure
 - Article extraction with title, summary, and URL identification
 - Error handling and fallback parsing strategies
 
@@ -131,7 +131,7 @@ The system implements a hybrid search approach:
 ## Project Scope and Limitations
 
 ### Current Scope
-- **Newsletter Sources**: TLDR newsletter family (6 primary newsletters)
+- **Newsletter Sources**: TLDR newsletter family
 - **Content Types**: Article titles, summaries, and source URLs
 - **User Base**: Individual developers and small teams
 - **Processing Volume**: Approximately 50-100 articles per day
@@ -141,7 +141,7 @@ The system implements a hybrid search approach:
 - **Local Development Focus**: Optimized for local development with manual cloud deployment
 - **Single Email Account**: Processes newsletters from one configured email account
 - **Basic Authentication**: Placeholder authentication system for development
-- **Newsletter Format Dependency**: Parsing logic specific to TLDR newsletter structure
+- **Newsletter Format Dependency**: Parsing logic specific to newsletter structure
 
 ### Future Enhancement Opportunities
 - Cloud deployment automation with AWS CDK
