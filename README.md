@@ -1,6 +1,6 @@
 # TLDR Newsletter Aggregation System
 
-A comprehensive newsletter aggregation and analysis platform that processes TLDR newsletters, generates embeddings for semantic search, and provides an AI-powered chat interface for querying tech news content.
+A comprehensive newsletter aggregation and analysis platform that processes newsletters, generates embeddings for semantic search, and provides an AI-powered chat interface for querying tech news content.
 
 ## Project Overview
 
