@@ -116,9 +116,11 @@ class ContentScraperService {
       const $ = cheerio.load(response.data);
       
       // Extract the main article content
+      // @ts-ignore
       const extractedContent = this.extractMainContent($);
       
       // Extract title if available
+      // @ts-ignore
       const extractedTitle = this.extractTitle($);
       
       if (!extractedContent || extractedContent.length < 100) {

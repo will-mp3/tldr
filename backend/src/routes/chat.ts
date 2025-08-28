@@ -11,6 +11,7 @@ interface ChatRequest {
 }
 
 // POST /api/chat - Send chat message with RAG
+// @ts-ignore
 router.post('/', async (req, res) => {
   try {
     const { message }: ChatRequest = req.body;

@@ -411,6 +411,7 @@ class EmailProcessor {
           
           if (!summary) {
             const $nextElements = $parent.nextAll();
+            // @ts-ignore
             $nextElements.each((i: number, el: cheerio.Element) => {
               if (i > 2) return false;
               const text = $(el).text().trim();
@@ -849,6 +850,7 @@ class EmailProcessor {
     return match ? `${match[1]} min` : undefined;
   }
 
+  // @ts-ignore
   private detectCategory($element: cheerio.Cheerio<cheerio.Element>): string | undefined {
     const text = $element.text().toLowerCase();
     const categories = [

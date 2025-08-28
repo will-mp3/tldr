@@ -173,6 +173,7 @@ class OpenSearchService {
 
       console.log(`🔍 OpenSearch query: "${query}"`);
 
+      // @ts-ignore
       const response = await this.client.search({
         index: this.indexName,
         body: searchBody

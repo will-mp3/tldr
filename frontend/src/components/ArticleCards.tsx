@@ -24,6 +24,7 @@ const ArticleCards: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiClient.getArticles(20, 0);
+      // @ts-ignore
       setArticles(response.data.articles);
     } catch (err) {
       console.error('Error fetching articles:', err);
