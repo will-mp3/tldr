@@ -129,11 +129,52 @@ coverage/
 config/production.json
 config/production.js
 
-# Claude
+# Email and communication data
+emails/
+email_data/
+*.eml
+*.mbox
+
+# AI/ML models and cache
+models/
+*.model
+*.pkl
+*.joblib
+.transformers_cache/
+huggingface_cache/
+
+# Backup and dump files  
+*.backup
+*.dump
+*.sql.gz
+backup/
+dumps/
+
+# SSL/TLS certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certs/
+keys/
+
+# AWS and cloud credentials
+.aws/
+credentials
+*.credentials
+
+# Additional environment files
+.env.staging
+.env.prod
+.env.secrets
+secrets/
+
+# Local development files
+*.local.json
+local_config.*
+
+# Project-specific exclusions
 CLAUDE.md
-
-# Context
 emailexample.txt
-
-# Docker
-docker-compose.yml
