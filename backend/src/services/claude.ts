@@ -142,15 +142,41 @@ Style: Professional but conversational, like a knowledgeable colleague sharing i
   private buildContext(articles: Article[]): string {
     if (articles.length === 0) return '';
     
-    const contextParts = articles.slice(0, 5).map(article => {
-      return `Title: ${article.title}
-Summary: ${article.summary}
+    const contextParts = articles.slice(0, 5).map((article, index) => {
+      let context = `Article ${index + 1}:
+Title: ${article.title}
+Summary: ${article.summary}`;
+
+      // Include full content if available (this is the key enhancement for RAG!)
+      if (article.content && article.content.length > 100) {
+        // Truncate content if very long to fit within Claude's context window
+        const maxContentLength = 2000; // Keep reasonable for context window
+        let content = article.content;
+        
+        if (content.length > maxContentLength) {
+          content = content.substring(0, maxContentLength);
+          // Try to end at a sentence boundary
+          const lastSentence = content.lastIndexOf('.');
+          if (lastSentence > maxContentLength * 0.7) {
+            content = content.substring(0, lastSentence + 1);
+          }
+          content += '...';
+        }
+        
+        context += `
+Full Content: ${content}`;
+      }
+
+      context += `
 Source: ${article.newsletter_source}
 Published: ${new Date(article.published_date).toLocaleDateString()}
+URL: ${article.source_url}
 ---`;
+      
+      return context;
     });
 
-    return contextParts.join('\n');
+    return contextParts.join('\n\n');
   }
 
   // Test Claude connection

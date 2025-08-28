@@ -120,7 +120,7 @@ router.get('/source/:source', async (req, res) => {
 router.post('/process-emails', async (req, res) => {
   try {
     console.log('🔄 Starting email processing...');
-    await emailProcessor.processRecentEmails();
+    await emailProcessor.processEmails();
     
     res.json({
       message: 'Email processing completed',

@@ -18,7 +18,7 @@ class SchedulerService {
     this.dailyProcessingJob = cron.schedule('0 14 * * *', async () => {
       console.log('🕙 10:00 AM EST - Starting daily newsletter processing...');
       try {
-        await emailProcessor.processRecentEmails();
+        await emailProcessor.processEmails();
         console.log('✅ Daily newsletter processing completed');
       } catch (error) {
         console.error('❌ Daily newsletter processing failed:', error);

@@ -16,6 +16,8 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
+    "@types/cheerio": "^0.22.35",
+    "cheerio": "^1.1.2",
     "lucide-react": "^0.540.0"
   }
 }

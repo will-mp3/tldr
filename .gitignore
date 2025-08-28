@@ -131,3 +131,9 @@ config/production.js
 
 # Claude
 CLAUDE.md
+
+# Context
+emailexample.txt
+
+# Docker
+docker-compose.yml

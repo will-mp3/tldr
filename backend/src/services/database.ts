@@ -124,6 +124,25 @@ export class DatabaseService {
   // Search articles by text
   async searchArticles(query: string): Promise<Article[]> {
     try {
+      // Split query into individual words for better matching
+      const words = query.toLowerCase().split(' ').filter(word => word.length > 2);
+      const searchConditions = words.map(word => `(title ILIKE ${words.indexOf(word) + 2} OR summary ILIKE ${words.indexOf(word) + 2} OR content ILIKE ${words.indexOf(word) + 2})`);
+      
+      const result = await this.pool.query(`
+        SELECT id, title, summary, content, source_url, newsletter_source,
+               published_date, created_at, updated_at, expires_at
+        FROM articles 
+        WHERE expires_at > NOW()
+        AND (${searchConditions.join(' OR ')})
+        ORDER BY published_date DESC
+        LIMIT 10
+      `, [query, ...words.map(word => `%${word}%`)]);
+
+      console.log(`🔍 Search for "${query}" found ${result.rows.length} articles`);
+      return result.rows;
+    } catch (error) {
+      console.error('❌ Error searching articles:', error);
+      // Fallback to simple search
       const result = await this.pool.query(`
         SELECT id, title, summary, content, source_url, newsletter_source,
                published_date, created_at, updated_at, expires_at
@@ -135,12 +154,11 @@ export class DatabaseService {
           content ILIKE $1
         )
         ORDER BY published_date DESC
+        LIMIT 10
       `, [`%${query}%`]);
-
+      
+      console.log(`🔍 Fallback search for "${query}" found ${result.rows.length} articles`);
       return result.rows;
-    } catch (error) {
-      console.error('❌ Error searching articles:', error);
-      throw new Error('Failed to search articles');
     }
   }
 
@@ -173,6 +191,7 @@ export class DatabaseService {
           title_embedding, summary_embedding, content_embedding
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (source_url) DO NOTHING
         RETURNING *
       `, [
         data.title,
@@ -185,6 +204,21 @@ export class DatabaseService {
         data.summary_embedding ? JSON.stringify(data.summary_embedding) : null,
         data.content_embedding ? JSON.stringify(data.content_embedding) : null,
       ]);
+
+      if (result.rows.length === 0) {
+        // Article already exists, fetch it
+        const existingResult = await this.pool.query(
+          'SELECT * FROM articles WHERE source_url = $1',
+          [data.source_url]
+        );
+        
+        if (existingResult.rows.length > 0) {
+          console.log(`📝 Article already exists: ${data.title.substring(0, 50)}...`);
+          return existingResult.rows[0];
+        } else {
+          throw new Error('Article insertion failed for unknown reason');
+        }
+      }
 
       return result.rows[0];
     } catch (error) {
