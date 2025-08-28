@@ -1,4 +1,4 @@
-#TLDR
+# TLDR
 
 A comprehensive newsletter aggregation and analysis platform that processes tech newsletters, generates embeddings for semantic search, and provides an AI-powered chat interface for querying tech news content.
 
