@@ -23,7 +23,7 @@ const ArticleCards: React.FC = () => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getArticles(20, 0);
+      const response = await apiClient.getArticles(30, 0); // Increased to 30 to ensure we get all today's articles
       // @ts-ignore
       setArticles(response.data.articles);
     } catch (err) {
@@ -81,8 +81,8 @@ const ArticleCards: React.FC = () => {
   return (
     <div className="article-cards">
       <div className="articles-header">
-        <h2>Recent Articles</h2>
-        <p>The latest tech news all in one place.</p>
+        <h2>Today's Tech & AI News</h2>
+        <p>The latest tech news from today's newsletters.</p>
       </div>
 
       <div className="articles-grid">

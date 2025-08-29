@@ -80,16 +80,23 @@ export class DatabaseService {
   // Get all articles with pagination
   async getArticles(limit: number = 10, offset: number = 0): Promise<{ articles: Article[], total: number }> {
     try {
-      // Get total count
-      const countResult = await this.pool.query('SELECT COUNT(*) FROM articles WHERE expires_at > NOW()');
+      // Get total count - only today's tech and AI articles
+      const countResult = await this.pool.query(`
+        SELECT COUNT(*) FROM articles 
+        WHERE expires_at > NOW()
+        AND DATE(published_date) = CURRENT_DATE
+        AND newsletter_source IN ('tldr_tech', 'tldr_ai')
+      `);
       const total = parseInt(countResult.rows[0].count);
 
-      // Get articles
+      // Get articles - only today's tech and AI articles
       const result = await this.pool.query(`
         SELECT id, title, summary, content, source_url, newsletter_source, 
                published_date, created_at, updated_at, expires_at
         FROM articles 
         WHERE expires_at > NOW()
+        AND DATE(published_date) = CURRENT_DATE
+        AND newsletter_source IN ('tldr_tech', 'tldr_ai')
         ORDER BY published_date DESC 
         LIMIT $1 OFFSET $2
       `, [limit, offset]);
