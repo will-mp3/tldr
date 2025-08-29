@@ -82,7 +82,7 @@ const ArticleCards: React.FC = () => {
     <div className="article-cards">
       <div className="articles-header">
         <h2>Today's Tech & AI News</h2>
-        <p>The latest tech news from today's newsletters.</p>
+        <p>The latest tech news all in one place.</p>
       </div>
 
       <div className="articles-grid">
