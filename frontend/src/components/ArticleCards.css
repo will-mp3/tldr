@@ -57,22 +57,12 @@
 }
 
 .source-badge.base {
-  background-color: #404040;
+  background-color: #007acc;
   color: #ffffff;
 }
 
 .source-badge.ai {
   background-color: #7c3aed;
-  color: #ffffff;
-}
-
-.source-badge.crypto {
-  background-color: #f59e0b;
-  color: #000000;
-}
-
-.source-badge.security {
-  background-color: #dc2626;
   color: #ffffff;
 }
 
