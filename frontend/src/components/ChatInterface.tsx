@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './ChatInterface.css';
 
 interface Message {
@@ -12,6 +12,37 @@ const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to show most recent question-answer pair within chat container only
+  useEffect(() => {
+    if (chatMessagesRef.current && messages.length >= 2) {
+      // Find the most recent user message (question)
+      const userMessages = messages.filter(msg => msg.isUser);
+      if (userMessages.length > 0) {
+        const lastUserMessage = userMessages[userMessages.length - 1];
+        const lastUserIndex = messages.findIndex(msg => msg.id === lastUserMessage.id);
+        
+        // Get the DOM element for the last user message
+        const messageElements = chatMessagesRef.current.querySelectorAll('.message');
+        const targetElement = messageElements[lastUserIndex] as HTMLElement;
+        
+        if (targetElement) {
+          // Calculate scroll position relative to chat container with padding
+          const containerTop = chatMessagesRef.current.offsetTop;
+          const elementTop = targetElement.offsetTop;
+          const padding = 20; // Add 20px padding above the user question
+          const scrollPosition = elementTop - containerTop - padding;
+          
+          // Smooth scroll within the chat container only
+          chatMessagesRef.current.scrollTo({
+            top: Math.max(0, scrollPosition), // Ensure we don't scroll above the top
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+  }, [messages, isLoading]); // Trigger on messages change and loading state change
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -79,7 +110,7 @@ const ChatInterface: React.FC = () => {
         <p>Ask me about recent tech news and developments</p>
       </div>
       
-      <div className="chat-messages">
+      <div className="chat-messages" ref={chatMessagesRef}>
         {messages.length === 0 && (
           <div className="empty-state">
             <p>👋 Hi! I'm your tech news assistant. Ask me about recent developments in tech, AI, or any topics from the newsletters.</p>
