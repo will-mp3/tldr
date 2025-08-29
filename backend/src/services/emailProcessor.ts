@@ -209,7 +209,7 @@ class EmailProcessor {
           content: articleContent || undefined, // Only save if content was successfully scraped
           source_url: article.url,
           newsletter_source: source,
-          published_date: emailDate.toISOString(),
+          published_date: new Date(emailDate.getTime() - (4 * 60 * 60 * 1000)).toISOString(), // Convert to EDT (UTC-4, current in August)
           title_embedding: embeddings.title_embedding,
           summary_embedding: embeddings.summary_embedding,
           content_embedding: embeddings.content_embedding
