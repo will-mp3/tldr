@@ -97,7 +97,12 @@ export class DatabaseService {
         WHERE expires_at > NOW()
         AND DATE(published_date) = CURRENT_DATE
         AND newsletter_source IN ('tldr_tech', 'tldr_ai')
-        ORDER BY published_date DESC 
+        ORDER BY 
+          CASE newsletter_source 
+            WHEN 'tldr_tech' THEN 1 
+            WHEN 'tldr_ai' THEN 2 
+          END,
+          published_date DESC 
         LIMIT $1 OFFSET $2
       `, [limit, offset]);
 
