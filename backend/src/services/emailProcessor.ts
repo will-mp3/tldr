@@ -366,18 +366,23 @@ class EmailProcessor {
             const $parent = $link.closest('td');
             const parentText = $parent.text().trim();
             
-            let summary = '';
-            const titleIndex = parentText.indexOf(title);
-            if (titleIndex !== -1) {
-              const afterTitle = parentText.substring(titleIndex + title.length).trim();
-              summary = this.extractSummaryFromText(afterTitle);
+            // Check if this is sponsored content before processing further
+            if (this.isSponsoredContent(parentText)) {
+              console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
+            } else {
+              let summary = '';
+              const titleIndex = parentText.indexOf(title);
+              if (titleIndex !== -1) {
+                const afterTitle = parentText.substring(titleIndex + title.length).trim();
+                summary = this.extractSummaryFromText(afterTitle);
+              }
+              
+              articles.push({
+                title: this.cleanTitle(title),
+                summary: summary || `Article about ${title}`,
+                url: realUrl
+              });
             }
-            
-            articles.push({
-              title: this.cleanTitle(title),
-              summary: summary || `Article about ${title}`,
-              url: realUrl
-            });
           } else {
             console.log(`⚠️  Skipping - no valid title found for URL: ${realUrl}`);
           }
@@ -398,10 +403,16 @@ class EmailProcessor {
         const title = $link.text().trim();
         
         if (this.isArticleLink(href, title)) {
-          let summary = '';
-          
           const $parent = $link.parent();
           const parentText = $parent.text().trim();
+          
+          // Check if this is sponsored content before processing further
+          if (this.isSponsoredContent(parentText)) {
+            console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
+            return; // Skip this article
+          }
+          
+          let summary = '';
           const titleIndex = parentText.indexOf(title);
           
           if (titleIndex !== -1) {
@@ -452,6 +463,13 @@ class EmailProcessor {
         if (this.isArticleLink(href, title)) {
           const $container = $strong.closest('td, div, p');
           const containerText = $container.text().trim();
+          
+          // Check if this is sponsored content before processing further
+          if (this.isSponsoredContent(containerText)) {
+            console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
+            return; // Skip this article
+          }
+          
           const summary = this.extractSummaryFromText(
             containerText.substring(containerText.indexOf(title) + title.length)
           );
@@ -536,14 +554,21 @@ class EmailProcessor {
           }
         }
         
-        // Only add article if we found a valid URL
+        // Only add article if we found a valid URL and it's not sponsored content
         if (title.length > 10 && url) {
-          articles.push({
-            title: this.cleanTitle(title),
-            summary: summary.trim() || `Article about ${title}`,
-            url: url,
-            readTime
-          });
+          const fullContext = `${title} ${summary}`;
+          
+          // Check if this is sponsored content
+          if (this.isSponsoredContent(fullContext)) {
+            console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
+          } else {
+            articles.push({
+              title: this.cleanTitle(title),
+              summary: summary.trim() || `Article about ${title}`,
+              url: url,
+              readTime
+            });
+          }
         }
       }
     }
@@ -848,6 +873,22 @@ class EmailProcessor {
   private extractReadTime(text: string): string | undefined {
     const match = text.match(/\((\d+)\s*minute\s*read\)/i);
     return match ? `${match[1]} min` : undefined;
+  }
+
+  private isSponsoredContent(text: string): boolean {
+    const lowerText = text.toLowerCase();
+    
+    // Check for "sponsor" indicators instead of "minute read"
+    const sponsorIndicators = [
+      'sponsor', 'sponsored', 'advertisement', 'ad:', 'promoted',
+      'partner content', 'paid content', 'brought to you by'
+    ];
+    
+    const hasSponsorTag = sponsorIndicators.some(indicator => lowerText.includes(indicator));
+    const hasMinuteRead = /\(\d+\s*minute\s*read\)/i.test(text);
+    
+    // If it has sponsor indicators but no minute read tag, it's likely sponsored content
+    return hasSponsorTag && !hasMinuteRead;
   }
 
   // @ts-ignore
