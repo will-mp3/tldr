@@ -275,22 +275,7 @@ class EmailProcessor {
       articles.push(...htmlArticles);
     }
     
-    // Always try text parsing as well
-    if (text) {
-      console.log('Attempting text parsing...');
-      const textArticles = this.parseTextArticles(text);
-      console.log(`Text parsing found ${textArticles.length} articles`);
-      
-      for (const textArticle of textArticles) {
-        const isDuplicate = articles.some(a => 
-          this.similarity(a.title, textArticle.title) > 0.8
-        );
-        if (!isDuplicate) {
-          console.log(`Adding unique text article: ${textArticle.title.substring(0, 50)}...`);
-          articles.push(textArticle);
-        }
-      }
-    }
+    // Text parsing removed - tracking URL parsing is sufficient for TLDR newsletters
     
     const deduplicated = this.deduplicateArticles(articles);
     console.log(`After deduplication: ${deduplicated.length} articles`);
@@ -366,22 +351,15 @@ class EmailProcessor {
             const $parent = $link.closest('td');
             const parentText = $parent.text().trim();
             
-            // Check if this is sponsored content before processing further
-            if (this.isSponsoredContent(parentText)) {
-              console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
-            } else {
-              let summary = '';
-              const titleIndex = parentText.indexOf(title);
-              if (titleIndex !== -1) {
-                const afterTitle = parentText.substring(titleIndex + title.length).trim();
-                summary = this.extractSummaryFromText(afterTitle);
-              }
-              
-              articles.push({
-                title: this.cleanTitle(title),
-                summary: summary || `Article about ${title}`,
-                url: realUrl
-              });
+            // Apply centralized content filtering
+            const filteredArticle = this.filterArticle({
+              title: this.cleanTitle(title),
+              summary: this.extractSummaryFromContext(parentText, title),
+              url: realUrl
+            }, parentText);
+            
+            if (filteredArticle) {
+              articles.push(filteredArticle);
             }
           } else {
             console.log(`⚠️  Skipping - no valid title found for URL: ${realUrl}`);
@@ -392,193 +370,31 @@ class EmailProcessor {
       }
     });
     
-    // Original fallback logic for table cells
-    $('table td').each((_: number, element: cheerio.Element) => {
-      const $cell = $(element);
-      const $links = $cell.find('a');
-      
-      $links.each((_: number, linkElement: cheerio.Element) => {
-        const $link = $(linkElement);
-        const href = $link.attr('href') || '';
-        const title = $link.text().trim();
-        
-        if (this.isArticleLink(href, title)) {
-          const $parent = $link.parent();
-          const parentText = $parent.text().trim();
-          
-          // Check if this is sponsored content before processing further
-          if (this.isSponsoredContent(parentText)) {
-            console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
-            return; // Skip this article
-          }
-          
-          let summary = '';
-          const titleIndex = parentText.indexOf(title);
-          
-          if (titleIndex !== -1) {
-            const afterTitle = parentText.substring(titleIndex + title.length).trim();
-            summary = this.extractSummaryFromText(afterTitle);
-          }
-          
-          if (!summary) {
-            const $nextElements = $parent.nextAll();
-            // @ts-ignore
-            $nextElements.each((i: number, el: cheerio.Element) => {
-              if (i > 2) return false;
-              const text = $(el).text().trim();
-              if (text && text.length > 30 && !this.looksLikeTitle(text)) {
-                summary = this.extractSummaryFromText(text);
-                return false;
-              }
-            });
-          }
-          
-          const readTime = this.extractReadTime($cell.text());
-          const category = this.detectCategory($cell);
-          const cleanUrl = this.extractRealUrl(href);
-          
-          if (cleanUrl) {
-            console.log(`Extracted URL: ${cleanUrl} from ${href.substring(0, 50)}...`);
-            articles.push({
-              title: this.cleanTitle(title),
-              summary: summary || `Article about ${title}`,
-              url: cleanUrl,
-              category,
-              readTime
-            });
-          }
-        }
-      });
-    });
-    
-    // Look for strong tags followed by text
-    $('strong').each((_: number, element: cheerio.Element) => {
-      const $strong = $(element);
-      const $link = $strong.find('a').first();
-      
-      if ($link.length) {
-        const href = $link.attr('href') || '';
-        const title = $link.text().trim();
-        
-        if (this.isArticleLink(href, title)) {
-          const $container = $strong.closest('td, div, p');
-          const containerText = $container.text().trim();
-          
-          // Check if this is sponsored content before processing further
-          if (this.isSponsoredContent(containerText)) {
-            console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
-            return; // Skip this article
-          }
-          
-          const summary = this.extractSummaryFromText(
-            containerText.substring(containerText.indexOf(title) + title.length)
-          );
-          
-          const cleanUrl = this.extractRealUrl(href);
-          if (cleanUrl) {
-            articles.push({
-              title: this.cleanTitle(title),
-              summary: summary || `Article about ${title}`,
-              url: cleanUrl,
-              category: this.detectCategory($container),
-              readTime: this.extractReadTime(containerText)
-            });
-          }
-        }
-      }
-    });
-    
     return articles;
   }
 
-  private parseTextArticles(text: string): Article[] {
-    const articles: Article[] = [];
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    
-    console.log('📄 Text parsing - analyzing text structure...');
-    console.log(`📊 Total lines: ${lines.length}`);
-    
-    // Debug: Look for patterns that might be article titles
-    let potentialTitles = 0;
-    let minuteReadCount = 0;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Check for "minute read" pattern (multiple formats)
-      if (line.toLowerCase().includes('minute read') || line.includes('MINUTE READ') || /\d+\s*min\b/i.test(line)) {
-        minuteReadCount++;
-        console.log(`📖 Found minute read pattern: "${line.substring(0, 100)}..."`);
-      }
-      
-      // Check for lines that might be titles (uppercase, short, followed by content)
-      if (line.length > 20 && line.length < 120 && /^[A-Z]/.test(line)) {
-        potentialTitles++;
-        if (potentialTitles <= 3) {
-          console.log(`📝 Potential title: "${line}"`);
-        }
-      }
-      
-      // Look for multiple minute read patterns
-      let readTimeMatch = line.match(/^(.+?)\s*\((\d+)\s*minute\s*read\)/i);
-      if (!readTimeMatch) {
-        readTimeMatch = line.match(/^(.+?)\s*\((\d+)\s*MINUTE\s*READ\)/);
-      }
-      if (!readTimeMatch) {
-        readTimeMatch = line.match(/^(.+?)\s*(\d+)\s*minute\s*read/i);
-      }
-      if (!readTimeMatch) {
-        readTimeMatch = line.match(/^(.+?)\s*(\d+)\s*MINUTE\s*READ/);
-      }
-      
-      if (readTimeMatch) {
-        const title = readTimeMatch[1].trim();
-        const readTime = `${readTimeMatch[2]} min`;
-        
-        let summary = '';
-        for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
-          if (lines[j] && !this.looksLikeTitle(lines[j])) {
-            summary += lines[j] + ' ';
-            if (summary.length > 200) break;
-          }
-        }
-        
-        let url = '';
-        for (let j = i - 2; j <= i + 2 && j < lines.length; j++) {
-          if (j >= 0 && lines[j]) {
-            const urlMatch = lines[j].match(/https?:\/\/[^\s]+/);
-            if (urlMatch) {
-              url = this.extractRealUrl(urlMatch[0]);
-              if (url) break;
-            }
-          }
-        }
-        
-        // Only add article if we found a valid URL and it's not sponsored content
-        if (title.length > 10 && url) {
-          const fullContext = `${title} ${summary}`;
-          
-          // Check if this is sponsored content
-          if (this.isSponsoredContent(fullContext)) {
-            console.log(`⚠️  Skipping sponsored content: "${title.substring(0, 50)}..."`);
-          } else {
-            articles.push({
-              title: this.cleanTitle(title),
-              summary: summary.trim() || `Article about ${title}`,
-              url: url,
-              readTime
-            });
-          }
-        }
-      }
+  // Centralized article filtering - single point of filtering logic
+  private filterArticle(article: { title: string; summary: string; url: string }, context: string): { title: string; summary: string; url: string } | null {
+    // Check for sponsored content
+    if (this.isSponsoredContent(context)) {
+      console.log(`⚠️  Skipping sponsored content: "${article.title.substring(0, 50)}..."`);  
+      return null;
     }
     
-    console.log(`📈 Text parsing summary:`);
-    console.log(`   - Potential titles found: ${potentialTitles}`);
-    console.log(`   - "minute read" patterns found: ${minuteReadCount}`);
-    console.log(`   - Articles extracted: ${articles.length}`);
+    // Add other filters here as needed (LinkedIn, etc. are already handled by SKIP_DOMAINS)
     
-    return articles;
+    return article;
+  }
+  
+  // Extract summary from context with better logic
+  private extractSummaryFromContext(parentText: string, title: string): string {
+    let summary = '';
+    const titleIndex = parentText.indexOf(title);
+    if (titleIndex !== -1) {
+      const afterTitle = parentText.substring(titleIndex + title.length).trim();
+      summary = this.extractSummaryFromText(afterTitle);
+    }
+    return summary || `Article about ${title}`;
   }
 
   private isAdminLink(href: string): boolean {
@@ -891,32 +707,6 @@ class EmailProcessor {
     return hasSponsorTag && !hasMinuteRead;
   }
 
-  // @ts-ignore
-  private detectCategory($element: cheerio.Cheerio<cheerio.Element>): string | undefined {
-    const text = $element.text().toLowerCase();
-    const categories = [
-      { key: 'ai', patterns: ['artificial intelligence', 'machine learning', 'llm', 'gpt', 'ai model', 'neural', 'deepmind', 'openai', 'anthropic'] },
-      { key: 'big-tech', patterns: ['google', 'apple', 'microsoft', 'amazon', 'meta', 'facebook', 'tesla', 'nvidia'] },
-      { key: 'startups', patterns: ['startup', 'funding', 'venture', 'founder', 'series a', 'series b', 'ipo', 'acquisition'] },
-      { key: 'programming', patterns: ['programming', 'coding', 'javascript', 'python', 'github', 'api', 'framework', 'developer'] },
-      { key: 'science', patterns: ['research', 'quantum', 'physics', 'biology', 'chemistry', 'discovery', 'experiment'] },
-      { key: 'security', patterns: ['security', 'cybersecurity', 'hack', 'vulnerability', 'breach', 'encryption', 'privacy'] }
-    ];
-    
-    for (const cat of categories) {
-      if (cat.patterns.some(pattern => text.includes(pattern))) {
-        return cat.key;
-      }
-    }
-    
-    return undefined;
-  }
-
-  private looksLikeTitle(text: string): boolean {
-    return text.length < 150 && 
-           /^[A-Z]/.test(text) && 
-           (text.includes('minute read') || /^[A-Z][^.!?]*$/.test(text));
-  }
 
   private similarity(str1: string, str2: string): number {
     const s1 = str1.toLowerCase();
