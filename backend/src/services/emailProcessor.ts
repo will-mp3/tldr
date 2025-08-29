@@ -25,7 +25,9 @@ class EmailProcessor {
     'unsubscribe',
     'manage',
     'tracking.tldrnewsletter.com',
-    'linkedin.com'           // Filter LinkedIn profile URLs
+    'linkedin.com',          // Filter LinkedIn profile URLs
+    'twitter.com',           // Filter Twitter profile URLs
+    'x.com'                  // Filter X (formerly Twitter) profile URLs
   ];
 
   constructor() {
