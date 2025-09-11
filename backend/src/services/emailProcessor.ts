@@ -250,9 +250,10 @@ class EmailProcessor {
   }
 
   private detectNewsletterSource(fromText: string, subject: string): string {
-    const combined = `${fromText} ${subject}`.toLowerCase();
+    const lowerFromText = fromText.toLowerCase();
     
-    if (combined.includes('ai')) return 'tldr_ai';
+    // Look for "TLDR AI" specifically in the from field
+    if (lowerFromText.includes('tldr ai')) return 'tldr_ai';
     
     return 'tldr_tech';
   }
