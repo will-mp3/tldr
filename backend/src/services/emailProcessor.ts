@@ -253,13 +253,6 @@ class EmailProcessor {
     const combined = `${fromText} ${subject}`.toLowerCase();
     
     if (combined.includes('ai')) return 'tldr_ai';
-    if (combined.includes('crypto')) return 'tldr_crypto';
-    if (combined.includes('web dev') || combined.includes('webdev')) return 'tldr_webdev';
-    if (combined.includes('founders')) return 'tldr_founders';
-    if (combined.includes('marketing')) return 'tldr_marketing';
-    if (combined.includes('design')) return 'tldr_design';
-    if (combined.includes('devops')) return 'tldr_devops';
-    if (combined.includes('infosec')) return 'tldr_infosec';
     
     return 'tldr_tech';
   }
